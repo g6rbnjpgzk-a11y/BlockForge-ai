@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockForge AI</title>
+<style>
+:root{
+  --bg:#080d12;--panel:#101820;--panel2:#151f29;--line:#263441;
+  --text:#eef5f8;--muted:#91a3ad;--accent:#66d17a;--accent2:#3fb95b;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 30% 0%,#18232c 0,#080d12 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.topbar{height:70px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(8,13,18,.9);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+.logo{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.2px}
+.logo-cube{width:34px;height:34px;border:1px solid #87e69a;border-radius:8px;background:linear-gradient(145deg,#72d984 0 48%,#42a957 49%);box-shadow:inset -7px -7px 0 rgba(0,0,0,.14)}
+.logo span{font-size:21px}.logo small{font-size:11px;color:#8de69d;border:1px solid #2d6640;padding:3px 7px;border-radius:999px}
+.status{font-size:13px;color:#a8b7bf}
+.app{max-width:1450px;margin:auto;padding:28px;display:grid;grid-template-columns:330px 1fr 340px;gap:20px}
+.panel{background:linear-gradient(180deg,rgba(21,31,41,.96),rgba(13,20,27,.96));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.left,.right{padding:20px}
+h1{font-size:30px;margin:0 0 7px}.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 22px}
+label{display:block;font-size:12px;color:#a9bac3;margin:0 0 7px;text-transform:uppercase;letter-spacing:.08em;font-weight:750}
+textarea{width:100%;height:105px;resize:vertical;background:#0a1117;border:1px solid #30404d;border-radius:12px;color:var(--text);padding:13px;outline:none}
+textarea:focus{border-color:#65d279;box-shadow:0 0 0 3px rgba(102,209,122,.1)}
+.primary{width:100%;margin-top:10px;border:0;border-radius:12px;padding:13px 16px;background:linear-gradient(180deg,#78df88,#48b960);color:#07100a;font-weight:850}
+.primary:hover{filter:brightness(1.06)}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#93a6b0;font-weight:800;margin:23px 0 10px}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.preset{background:#0c141b;border:1px solid #2a3945;color:#dce7eb;border-radius:11px;padding:10px 8px;text-align:left}
+.preset:hover,.preset.active{border-color:#5ed074;background:#122019}
+.preset b{display:block;font-size:13px}.preset span{display:block;color:#7f929d;font-size:11px;margin-top:3px}
+.center{min-width:0;display:flex;flex-direction:column;gap:14px}
+.viewer{position:relative;overflow:hidden;min-height:580px;background:linear-gradient(#182b38,#101b23 60%,#0b1218);border-radius:18px;border:1px solid var(--line)}
+#voxel{width:100%;height:100%;min-height:580px;display:block;touch-action:none}
+.viewer-top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;pointer-events:none}
+.badge{background:rgba(6,11,15,.72);border:1px solid #30404b;border-radius:999px;padding:7px 10px;font-size:11px;color:#b8c7ce;backdrop-filter:blur(7px)}
+.viewer-help{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;color:#91a1aa;background:rgba(6,11,15,.72);padding:7px 10px;border-radius:999px;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{padding:14px;border-radius:14px;background:#101820;border:1px solid var(--line)}.stat b{font-size:19px}.stat span{display:block;color:#80929d;font-size:11px;margin-top:3px}
+.right h2{margin:0 0 4px;font-size:21px}.right .desc{font-size:13px;line-height:1.5;color:#91a3ad;margin:0 0 16px}
+.progress{height:7px;background:#26333d;border-radius:99px;overflow:hidden;margin:10px 0 15px}.progress i{display:block;height:100%;background:var(--accent);width:0}
+.layer-box{border:1px solid var(--line);background:#0c141b;border-radius:13px;padding:14px}
+.layer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.layer-head b{font-size:15px}.layer-num{font-size:11px;color:#7f939e}
+input[type=range]{width:100%;accent-color:#66d17a}
+.guide{font-size:13px;line-height:1.6;color:#b9c7cd;min-height:100px}
+.materials{display:flex;flex-wrap:wrap;gap:7px}.mat{font-size:11px;color:#c8d5da;background:#111c24;border:1px solid #2a3945;padding:6px 8px;border-radius:8px}
+.controls{display:flex;gap:8px;margin-top:12px}.secondary{flex:1;border:1px solid #334551;background:#111a22;color:#dbe6eb;border-radius:10px;padding:10px}.secondary:hover{border-color:#5c727e}
+.export{margin-top:10px;width:100%}
+.notice{margin-top:14px;padding:11px 12px;border-radius:11px;background:#102116;border:1px solid #295536;color:#a9ddb2;font-size:11px;line-height:1.5}
+@media(max-width:1100px){.app{grid-template-columns:280px 1fr}.right{grid-column:1/-1}.right-inner{display:grid;grid-template-columns:1fr 1fr;gap:15px}.right h2,.right .desc{grid-column:1/-1}}
+@media(max-width:760px){.topbar{padding:0 15px;height:62px}.status{display:none}.app{padding:14px;display:block}.left,.right{margin-top:14px}.viewer{min-height:440px}#voxel{min-height:440px}.stats{grid-template-columns:1fr 1fr}.right-inner{display:block}.presets{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo"><div class="logo-cube"></div><span>BlockForge AI</span><small>BUILD LAB</small></div>
+  <div class="status">Prototype • voxel builder</div>
+</header>
+
+<main class="app">
+  <aside class="panel left">
+    <h1>Build something.</h1>
+    <p class="sub">Describe a Minecraft-style build and BlockForge turns the idea into a block-by-block plan.</p>
+    <label for="prompt">Your build idea</label>
+    <textarea id="prompt" placeholder="Try: a cozy medieval cottage with a chimney"></textarea>
+    <button class="primary" id="generate">✦ Generate Build</button>
+
+    <div class="section-title">Preset builds</div>
+    <div class="presets" id="presets"></div>
+
+    <div class="notice">
+      This first version runs locally in your browser. It uses a build-planning engine rather than a paid AI API, so there is no subscription or API key needed to test it.
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="viewer panel">
+      <canvas id="voxel"></canvas>
+      <div class="viewer-top"><div class="badge" id="viewBadge">FULL BUILD</div><div class="badge">Drag to rotate • scroll to zoom</div></div>
+      <div class="viewer-help">Each cube is an individual build block</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="blockCount">0</b><span>blocks</span></div>
+      <div class="stat"><b id="height">0</b><span>blocks tall</span></div>
+      <div class="stat"><b id="layers">0</b><span>layers</span></div>
+      <div class="stat"><b id="difficulty">—</b><span>difficulty</span></div>
+    </div>
+  </section>
+
+  <aside class="panel right">
+    <div class="right-inner">
+      <h2 id="buildName">Choose a build</h2>
+      <p class="desc" id="buildDesc">Pick a preset or enter an idea on the left.</p>
+
+      <div class="layer-box">
+        <div class="layer-head"><b id="layerTitle">Layer 0</b><span class="layer-num" id="layerNum">0 / 0</span></div>
+        <input id="layerSlider" type="range" min="0" max="0" value="0">
+        <div class="progress"><i id="progress"></i></div>
+        <div class="guide" id="guide">Your layer instructions will appear here.</div>
+        <div class="materials" id="materials"></div>
+        <div class="controls">
+          <button class="secondary" id="prev">← Previous</button>
+          <button class="secondary" id="next">Next →</button>
+        </div>
+      </div>
+      <button class="secondary export" id="fullBuild">Show Full Build</button>
+      <button class="secondary export" id="download">Download Blueprint JSON</button>
+    </div>
+  </aside>
+</main>
+
+<script>
+const COLORS={
+  stone:"#7f8789",cobblestone:"#687176",oak_log:"#765238",oak_planks:"#b18452",
+  spruce_planks:"#6f4b31",spruce_stairs:"#795337",dark_oak:"#49301f",brick:"#9b5140",
+  glass:"#8fd3df",concrete:"#d4d7d8",white:"#e6e7e3",sand:"#d8c18b",grass:"#63a84e",
+  dirt:"#805734",leaves:"#4c8d46",water:"#4c8fc0",lantern:"#e5b84d"
+};
+const NAMES={stone:"Stone",cobblestone:"Cobblestone",oak_log:"Oak Log",oak_planks:"Oak Planks",
+spruce_planks:"Spruce Planks",spruce_stairs:"Spruce Stairs",dark_oak:"Dark Oak",brick:"Brick",
+glass:"Glass",concrete:"Concrete",white:"White Block",sand:"Sand",grass:"Grass",dirt:"Dirt",
+leaves:"Leaves",water:"Water",lantern:"Lantern"};
+
+function add(a,x,y,z,t){a.push({x,y,z,t})}
+function box(a,x1,x2,y1,y2,z1,z2,t){
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)for(let z=z1;z<=z2;z++)add(a,x,y,z,t)
+}
+function layersFrom(blocks, descriptions=[]){
+  const max=Math.max(...blocks.map(b=>b.y),0), out=[];
+  for(let y=0;y<=max;y++){
+    const bs=blocks.filter(b=>b.y===y), counts={};
+    bs.forEach(b=>counts[b.t]=(counts[b.t]||0)+1);
+    const mats=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([t,n])=>({t,n}));
+    out.push({y,title:descriptions[y]?.title||`Layer ${y}`,desc:descriptions[y]?.desc||`Place ${bs.length} blocks on layer ${y}, following the shape shown in the preview.`,mats});
+  }
+  return out;
+}
+function finish(id,name,difficulty,desc,blocks,descriptions=[]){
+  const minX=Math.min(...blocks.map(b=>b.x)),maxX=Math.max(...blocks.map(b=>b.x));
+  const minZ=Math.min(...blocks.map(b=>b.z)),maxZ=Math.max(...blocks.map(b=>b.z));
+  return {id,name,difficulty,desc,blocks,layers:layersFrom(blocks,descriptions),
+    dims:{x:maxX-minX+1,y:Math.max(...blocks.map(b=>b.y))+1,z:maxZ-minZ+1}};
+}
+function cottage(){
+ const a=[]; box(a,0,13,0,0,0,11,"cobblestone"); box(a,1,12,1,1,1,10,"oak_planks");
+ for(let y=1;y<=4;y++)for(let x=0;x<14;x++)for(let z=0;z<12;z++){
+   if(x===0||x===13||z===0||z===11){
+    const door=(z===0&&x>=6&&x<=7&&y<=2), win=(y>=2&&y<=3&&((z===0&&(x===2||x===3||x===10||x===11))||(x===0&&z===5)||(x===13&&z===5)));
+    if(!door)add(a,x,y,z,win?"glass":((x===0||x===13)&&(z===0||z===11)?"oak_log":"oak_planks"));
+   }
+ }
+ for(let y=5;y<=8;y++){let d=y-5;box(a,d,13-d,y,y,0,11,"spruce_stairs")}
+ box(a,10,11,5,8,5,6,"brick"); add(a,5,2,0,"lantern");add(a,8,2,0,"lantern");
+ return finish("cottage","Cozy Medieval Cottage","Easy","A compact starter cottage with timber walls, windows, a steep roof and chimney.",a,
+ [{title:"Foundation",desc:"Lay the cobblestone footprint. This is the full footprint of the cottage."},
+ {title:"Floor & lower walls",desc:"Build the oak floor and begin the timber-framed walls. Leave the front doorway open."},
+ {title:"Walls",desc:"Continue the walls and add the front and side windows using glass blocks."},
+ {title:"Walls",desc:"Finish the fourth wall layer and check that the doorway remains open."},
+ {title:"Wall cap",desc:"Complete the wall height before starting the roof."},
+ {title:"Roof base",desc:"Start the spruce roof from both outer edges."},
+ {title:"Roof",desc:"Continue the roof inward, keeping both sides symmetrical."},
+ {title:"Roof peak",desc:"Finish the roof ridge and build the chimney."},
+ {title:"Chimney & details",desc:"Finish the chimney and add the two lantern details."}]);
+}
+function tower(){
+ const a=[],cx=8,cz=8;
+ for(let y=0;y<=10;y++)for(let x=0;x<17;x++)for(let z=0;z<17;z++){
+  const dx=x-cx,dz=z-cz,d=Math.sqrt(dx*dx+dz*dz);
+  if(d<=7.4&&d>=6.0)add(a,x,y,z,(y>=2&&y<=5&&(Math.abs(dx)===6||Math.abs(dz)===6))?"glass":"stone");
+ }
+ box(a,4,12,1,1,4,12,"oak_planks");
+ for(let y=11;y<=16;y++){let r=6-Math.floor((y-11)/2);for(let x=cx-r;x<=cx+r;x++)for(let z=cz-r;z<=cz+r;z++)if(Math.abs(x-cx)<=r&&Math.abs(z-cz)<=r)add(a,x,y,z,"dark_oak")}
+ add(a,8,12,1,"lantern");add(a,8,8,0,"lantern");
+ return finish("tower","Wizard Tower","Medium","A tall stone tower with glowing windows and a dark stepped roof.",a);
+}
+function pagoda(){
+ const a=[]; box(a,0,20,0,0,0,20,"stone");
+ const tiers=[{y:1,h:3,r:9},{y:5,h:3,r:7},{y:9,h:3,r:5},{y:13,h:3,r:3}];
+ for(const q of tiers){
+  box(a,10-q.r,10+q.r,q.y,q.y,10-q.r,10+q.r,"spruce_stairs");
+  for(let y=q.y+1;y<=q.y+q.h;y++){
+   for(let x=10-q.r+1;x<=10+q.r-1;x++)for(let z=10-q.r+1;z<=10+q.r-1;z++){
+    const edge=x===10-q.r+1||x===10+q.r-1||z===10-q.r+1||z===10+q.r-1;
+    if(edge)add(a,x,y,z,(y%2===0)?"dark_oak":"brick");
+    else if(y===q.y+1)add(a,x,y,z,"oak_planks");
+   }
+  }
+ }
+ box(a,9,11,16,18,9,11,"dark_oak");add(a,10,17,10,"lantern");
+ return finish("pagoda","Japanese Pagoda","Hard","A layered pagoda with four roofs and a compact central tower.",a);
+}
+function modern(){
+ const a=[]; box(a,0,17,0,0,0,12,"concrete"); box(a,1,16,1,1,1,11,"white");
+ for(let y=2;y<=4;y++)for(let x=0;x<=17;x++)for(let z=0;z<=12;z++){
+  const edge=x===0||x===17||z===0||z===12;
+  if(edge)add(a,x,y,z,(z===0||z===12||x===0||x===17)?"glass":"white");
+ }
+ for(let y=5;y<=5;y++)box(a,0,17,y,y,0,12,"white");
+ for(let x=2;x<=15;x+=4)for(let y=2;y<=4;y++)add(a,x,y,0,"concrete");
+ box(a,2,15,6,6,2,10,"concrete");
+ for(let y=7;y<=8;y++)for(let x=1;x<=16;x++)for(let z=1;z<=11;z++)if(x===1||x===16||z===1||z===11)add(a,x,y,z,"glass");
+ add(a,8,2,0,"lantern");
+ return finish("modern","Modern Glass House","Medium","A clean two-level house built around glass walls and concrete framing.",a);
+}
+function castle(){
+ const a=[]; box(a,0,24,0,0,0,24,"stone");
+ for(let y=1;y<=4;y++){
+  for(let x=0;x<25;x++)for(let z=0;z<25;z++)if(x<=1||x>=23||z<=1||z>=23)add(a,x,y,z,"cobblestone");
+ }
+ const towers=[[2,2],[22,2],[2,22],[22,22]];
+ for(const [cx,cz] of towers){
+  for(let y=1;y<=10;y++)for(let x=cx-2;x<=cx+2;x++)for(let z=cz-2;z<=cz+2;z++){
+   if(Math.abs(x-cx)===2||Math.abs(z-cz)===2)add(a,x,y,z,"stone");
+  }
+  box(a,cx-3,cx+3,11,11,cz-3,cz+3,"dark_oak");
+ }
+ box(a,8,16,1,4,8,16,"brick"); box(a,10,14,5,5,10,14,"oak_planks");
+ return finish("castle","Fortified Castle","Hard","A compact castle with thick walls, four towers and a central keep.",a);
+}
+function farm(){
+ const a=[]; box(a,0,15,0,0,0,15,"grass"); box(a,1,6,1,1,1,7,"oak_planks");
+ for(let y=2;y<=4;y++)for(let x=1;x<=6;x++)for(let z=1;z<=7;z++)if(x===1||x===6||z===1||z===7)add(a,x,y,z,y===3&&x===1?"glass":"oak_planks");
+ for(let x=9;x<=14;x+=2)for(let z=2;z<=13;z+=2){add(a,x,1,z,"dirt");add(a,x,2,z,"grass")}
+ box(a,2,5,5,5,2,6,"spruce_stairs");add(a,3,3,1,"lantern");
+ return finish("farm","Starter Farm","Easy","A simple farmhouse beside organized crop plots.",a);
+}
+const PRESETS=[cottage,tower,pagoda,modern,castle,farm];
+let build=null,currentLayer=0,showFull=true,yaw=-0.65,zoom=1.0,drag=false,lastX=0;
+const canvas=document.getElementById("voxel"),ctx=canvas.getContext("2d");
+function presetCard(b){
+ const d=document.createElement("button");d.className="preset";d.dataset.id=b.id;
+ d.innerHTML=`<b>${b.name}</b><span>${b.difficulty}</span>`;
+ d.onclick=()=>load(b.id);return d;
+}
+function load(id,promptText=""){
+ const maker=PRESETS.find(fn=>fn().id===id); build=maker();
+ if(promptText){const words=promptText.trim().replace(/\s+/g," ").split(" ").slice(0,6).join(" ");build.name=words?`AI Concept: ${words.charAt(0).toUpperCase()+words.slice(1)}`:build.name}
+ currentLayer=build.layers.length-1;showFull=true;
+ document.querySelectorAll(".preset").forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+ updateUI();draw();
+}
+function choose(text){
+ const s=text.toLowerCase();
+ if(/pagoda|japanese|temple/.test(s))return "pagoda";
+ if(/wizard|tower|mage/.test(s))return "tower";
+ if(/castle|fort|kingdom/.test(s))return "castle";
+ if(/modern|mansion|glass house|contemporary/.test(s))return "modern";
+ if(/farm|barn|crop/.test(s))return "farm";
+ return "cottage";
+}
+function updateUI(){
+ document.getElementById("buildName").textContent=build.name;
+ document.getElementById("buildDesc").textContent=build.desc;
+ document.getElementById("blockCount").textContent=build.blocks.length.toLocaleString();
+ document.getElementById("height").textContent=build.dims.y;
+ document.getElementById("layers").textContent=build.layers.length;
+ document.getElementById("difficulty").textContent=build.difficulty;
+ const s=document.getElementById("layerSlider");s.max=build.layers.length-1;s.value=currentLayer;
+ const l=build.layers[currentLayer];
+ document.getElementById("layerTitle").textContent=l.title;
+ document.getElementById("layerNum").textContent=`${currentLayer+1} / ${build.layers.length}`;
+ document.getElementById("guide").textContent=l.desc;
+ document.getElementById("materials").innerHTML=l.mats.map(m=>`<span class="mat">${NAMES[m.t]||m.t} ×${m.n}</span>`).join("");
+ document.getElementById("progress").style.width=((currentLayer+1)/build.layers.length*100)+"%";
+ document.getElementById("viewBadge").textContent=showFull?"FULL BUILD":`UP TO LAYER ${currentLayer}`;
+}
+function shade(hex,f){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255; r=Math.max(0,Math.min(255,Math.round(r*f)));g=Math.max(0,Math.min(255,Math.round(g*f)));b=Math.max(0,Math.min(255,Math.round(b*f)));return `rgb(${r},${g},${b})`}
+function resize(){const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);draw()}
+function project(x,y,z,cx,cy,scale){
+ const c=Math.cos(yaw),s=Math.sin(yaw),rx=c*x-s*z,rz=s*x+c*z;
+ return [cx+(rx-rz)*scale,cy+(rx+rz)*scale*.5-y*scale];
+}
+function drawCube(b,cx,cy,scale,highlight){
+ const p=(x,y,z)=>project(x,y,z,cx,cy,scale);
+ const A=p(b.x,b.y+1,b.z),B=p(b.x+1,b.y+1,b.z),C=p(b.x+1,b.y+1,b.z+1),D=p(b.x,b.y+1,b.z+1);
+ const E=p(b.x,b.y,b.z),F=p(b.x+1,b.y,b.z),G=p(b.x+1,b.y,b.z+1),H=p(b.x,b.y,b.z+1);
+ let col=COLORS[b.t]||"#888";ctx.globalAlpha=b.t==="glass"?.62:1;
+ const face=(pts,color)=>{ctx.beginPath();ctx.moveTo(...pts[0]);pts.slice(1).forEach(q=>ctx.lineTo(...q));ctx.closePath();ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=highlight?"rgba(210,255,216,.72)":"rgba(0,0,0,.16)";ctx.lineWidth=highlight?1.4:.6;ctx.stroke()};
+ face([A,B,C,D],shade(col,1.12));face([A,D,H,E],shade(col,.74));face([B,C,G,F],shade(col,.9));
+ if(highlight){ctx.strokeStyle="#baffc5";ctx.lineWidth=1.5;ctx.stroke()}
+ ctx.globalAlpha=1;
+}
+function draw(){
+ if(!build)return;
+ const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
+ const grd=ctx.createLinearGradient(0,0,0,h);grd.addColorStop(0,"#1a3040");grd.addColorStop(1,"#0b141b");ctx.fillStyle=grd;ctx.fillRect(0,0,w,h);
+ const cx=w/2,cy=h*.76,scale=Math.max(10,Math.min(w/(build.dims.x+build.dims.z+10),h/(build.dims.y+18)))*zoom;
+ const maxX=build.dims.x-1,maxZ=build.dims.z-1;
+ const centerX=maxX/2,centerZ=maxZ/2;
+ const visible=build.blocks.filter(b=>showFull||b.y<=currentLayer);
+ visible.sort((a,b)=>{
+   const da=((a.x-centerX)+(a.z-centerZ))+a.y*.18;
+   const db=((b.x-centerX)+(b.z-centerZ))+b.y*.18;
+   return da-db;
+ });
+ visible.forEach(b=>drawCube({...b,x:b.x-centerX,z:b.z-centerZ},cx,cy,scale,!showFull&&b.y===currentLayer));
+}
+document.getElementById("presets").append(...PRESETS.map(fn=>presetCard(fn())));
+document.getElementById("generate").onclick=()=>{const p=document.getElementById("prompt").value.trim();load(choose(p),p)};
+document.getElementById("prompt").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.getElementById("generate").click()}});
+document.getElementById("layerSlider").oninput=e=>{currentLayer=+e.target.value;showFull=false;updateUI();draw()};
+document.getElementById("prev").onclick=()=>{currentLayer=Math.max(0,currentLayer-1);showFull=false;updateUI();draw()};
+document.getElementById("next").onclick=()=>{currentLayer=Math.min(build.layers.length-1,currentLayer+1);showFull=false;updateUI();draw()};
+document.getElementById("fullBuild").onclick=()=>{showFull=true;updateUI();draw()};
+document.getElementById("download").onclick=()=>{
+ const data={app:"BlockForge AI",version:"0.1",build:{name:build.name,difficulty:build.difficulty,dimensions:build.dims,blocks:build.blocks}};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="blockforge-blueprint.json";a.click();URL.revokeObjectURL(url);
+};
+canvas.addEventListener("pointerdown",e=>{drag=true;lastX=e.clientX;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{if(!drag)return;yaw+=(e.clientX-lastX)*.008;lastX=e.clientX;draw()});
+canvas.addEventListener("pointerup",()=>drag=false);canvas.addEventListener("pointercancel",()=>drag=false);
+canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.55,Math.min(1.7,zoom-e.deltaY*.001));draw()},{passive:false});
+window.addEventListener("resize",resize);
+load("cottage");
+resize();
+</script>
+</body>
+</html>
